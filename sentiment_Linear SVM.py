@@ -102,7 +102,7 @@ svm_grid.best_params_
 svm_grid.best_score_
 
 
-# # Combine validation and train and refit the model with the new hyperparameter settings
+# Combine validation and train and refit the model with the new hyperparameter settings
 
 X_final = vstack([X_val, X_train]).toarray()
 y_train = pd.Series(y_train)
