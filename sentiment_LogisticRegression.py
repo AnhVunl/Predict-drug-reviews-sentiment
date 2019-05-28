@@ -32,6 +32,7 @@ data.head()
 
 # Text feature transformation
 # For each text variable, I'd change the X, for example, data['verb'], data['adjectives']
+
 # Feature transformation 
 vectorizer = TfidfVectorizer()
 X = vectorizer.fit_transform(data['verbs'])
