@@ -10,8 +10,10 @@ To navigate, start with
 
 1. Preprocessing
 
-2. Analysis
+2. Experiment_1 
 
-3. Evaluation
+3. Experiment_2 & 3
 
-4. Reporting
+4. Evaluation
+
+5. Reporting
