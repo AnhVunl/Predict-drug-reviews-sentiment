@@ -1,7 +1,7 @@
-In total, I conducted three different experiments, including one follow-up analysis:
-1. Sentiment analysis of drug reviews
-2. Measure relatedness between text characteristics and review ratings
-3. Follow up on improving the number of features and and model performance
+In total, I conducted three different experiments, to achieve these two objectives:
+
+1. Conduct sentiment analysis of drug reviews
+2. Measure relatedness between text features and review ratings
 
 The dataset could be found at this URL:
 https://archive.ics.uci.edu/ml/datasets/Drug+Review+Dataset+%28Drugs.com%29#
@@ -12,7 +12,7 @@ To navigate, start with
 
 2. Experiment_1 
 
-3. Experiment_2 & 3
+3. Experiment_2
 
 4. Evaluation
 
