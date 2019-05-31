@@ -1,10 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# # Packages
-
-# In[1]:
-
+# Load the packages
 
 import scipy
 from scipy.sparse import csr_matrix, find, hstack
@@ -25,83 +19,46 @@ from nltk.corpus import sentiwordnet as swn
 from nltk import ngrams
 from nltk.stem import WordNetLemmatizer
 
-from collections import defaultdict
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-from sklearn import neighbors, datasets, preprocessing
-from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
-
-from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import chi2
-
-
-# # Loading data
-
-# In[11]:
-
-
-# Combining both train and test data for pre-processing
-df_1 = pd.read_csv('/Users/anhvu/Thesis/drugsComTrain_raw.tsv',delimiter='\t',encoding='utf-8')
-df_2 = pd.read_csv('/Users/anhvu/Thesis/drugsComTest_raw.tsv',delimiter='\t',encoding='utf-8')
+# Remove missing values and set up data frame
+df_1 = pd.read_csv('/drugsComTrain_raw.tsv',delimiter='\t',encoding='utf-8')
+df_2 = pd.read_csv('/drugsComTest_raw.tsv',delimiter='\t',encoding='utf-8')
 df_1 = df_1.dropna()
 df_2 = df_2.dropna()
 df = pd.concat([df_1, df_2])
 
-
-# In[12]:
-
-
-# Label sentiment: 0 (negative) if score is between 1 and 5, 1 (positive) if score is higher than 5
+# Label sentiment: 0 (negative) if score is between 1 and 6, 1 (positive) if score is higher than 6
 def scoring (x):
     if x >= 1 and x < 6:
         return 0
     elif x >= 6:
         return 1
 df["sentiment"] = df["rating"].apply(scoring)
-
-
-# In[13]:
-
-
 df = df[['review','sentiment', 'rating']] # we keep only the review, the sentiment and ratings for the analyses
 df['review'] = df['review'].astype('str')
-
-
-# In[28]:
-
-
 df.head()
 
+# Feature extraction
 
-# ## Single feature set: positive verbs
-
-# In[26]:
-
-
-# Remove stopwords, punctuation and pre-processing our reviews
+# Positive verbs
 def pos_verbs(review):
-    # text cleaning steps
-    only_letters = re.sub("[^a-zA-Z]", " ", review) # strip of symbols and punctuations
+    only_letters = re.sub("[^a-zA-Z]", " ", review) # strip symbols and punctuations
     stop_words = set(stopwords.words('english')) 
     tokens = nltk.word_tokenize(only_letters.lower()) # tokenize the reviews
     tagged = nltk.pos_tag(tokens) # get the POS tags for each token
     lemmatizer = WordNetLemmatizer() # lemmatize text
     
-    verbs = []
+    verbs = [] # list to keep all the positive verbs
     # filter out tokens that are not verbs and negative verbs
     for tup in tagged:
         
         if "VB" in tup[1]:
             synset = list(swn.senti_synsets(tup[0], 'v')) 
-        
+            # only keep the positive verbs (determined by SentiWordNet)
             if len(synset) > 1 and (synset[0].pos_score() > synset[0].neg_score() or synset[0].pos_score() >= synset[0].obj_score()):
                 
-                # filter out verbs that have a positive score lower than objective score
                 verbs.append(tup[0])
                             
-    lower_case = [l.lower() for l in verbs] #lower case all the words
+    lower_case = [l.lower() for l in verbs] #lower case all the positive verbs
     
     filtered_result = list(filter(lambda l: l not in stop_words, lower_case))#lower_case)) # keep tokens that are not stopwords
     
@@ -111,26 +68,14 @@ def pos_verbs(review):
         word = lemmatizer.lemmatize(t, 'v')
         if word not in lemmas:
             lemmas.append(word)
-    
-    # create new output as strings
+     
     string = ""
     for word in lemmas: 
         string += word + " "
     return string
+df['ps_verb'] = df['review'].apply(pos_verbs) # apply to all rows in our current data frame
 
-
-# In[27]:
-
-
-df['ps_verb'] = df['review'].apply(pos_verbs)
-
-
-# # Single feature set: negative verbs
-
-# In[29]:
-
-
-# same process for negative verbs
+# Negative verbs: same process as positive verbs, only difference is in the SWN score extraction
 def neg_verbs(review):
     only_letters = re.sub("[^a-zA-Z]", " ",review)
     stop_words = set(stopwords.words('english')) 
@@ -142,7 +87,7 @@ def neg_verbs(review):
     for tup in tagged:
         if "VB" in tup[1]:
             synset = list(swn.senti_synsets(tup[0], 'v'))
-            
+             # only keep the negative verbs (determined by SentiWordNet)
             if len(synset) > 1 and (synset[0].neg_score() >= synset[0].obj_score() or synset[0].neg_score() > synset[0].pos_score()):
                 if tup[0] not in verbs:
                     verbs.append(tup[0])
@@ -156,33 +101,19 @@ def neg_verbs(review):
         word = lemmatizer.lemmatize(t, 'v')
         if word not in lemmas:
             lemmas.append(word)
-    
-    # create new output as strings
     string = ""
     for word in lemmas: 
         string += word + " "
     return string
-
-
-# In[ ]:
-
-
 df['neg_verb'] = df['review'].apply(neg_verbs)
 
-
-# In[ ]:
-
+# Combine both positive and negative verbs
 
 df['verbs'] = df['ps_verb'].str.cat(df['neg_verb'], sep =" ") 
 
-
-# # Single feature set: positive adjectives
-
-# In[30]:
-
-
-def pos_adjectives(tweet):
-    only_letters = re.sub("[^a-zA-Z]", " ",tweet) 
+# Positive adjectives
+def pos_adjectives(review):
+    only_letters = re.sub("[^a-zA-Z]", " ",review) 
     tokens = nltk.word_tokenize(only_letters)[2:]
     tagged = nltk.pos_tag(tokens)
     
@@ -210,26 +141,15 @@ def pos_adjectives(tweet):
         if word not in lemmas:
             lemmas.append(word)
     
-    # create new output as strings
     string = ""
     for word in lemmas: 
         string += word + " "
     return string
-
-
-# In[ ]:
-
-
 df['ps_adj'] = df['review'].apply(pos_adjectives)
 
-
-# # Single feature set: negative adjectives
-
-# In[31]:
-
-
-def neg_adjectives(tweet):
-    only_letters = re.sub("[^a-zA-Z]", " ",tweet) 
+# Negative adjectives
+def neg_adjectives(review):
+    only_letters = re.sub("[^a-zA-Z]", " ", review) 
     tokens = nltk.word_tokenize(only_letters)[2:]
     tagged = nltk.pos_tag(tokens)
     adjectives = []
@@ -253,126 +173,58 @@ def neg_adjectives(tweet):
         if word not in lemmas:
             lemmas.append(word)
     
-    # create new output as strings
     string = ""
     for word in lemmas: 
         string += word + " "
     return string
-
-
-# In[ ]:
-
-
 df['neg_adj'] = df['review'].apply(neg_adjectives)
 
+# Combine both positive and negative adjectives
+df['adjectives'] = df['ps_adj'].str.cat(df['neg_adj'], sep =" ") 
 
-# # Multiple-word feature set: positive noun phrases
-
-# In[32]:
-
-
-## Make combinations of positive adjectives with nouns (list format)
-
+# Positive adjective phrases: we'll use spaCy to make pairs of adjectives and nouns
 def pos_np (text):
-    stop_words = set(stopwords.words('english'))
-    chunk = []
-    doc = ""
-    for word in text.split():
-        if word not in stop_words:
-            new +=" " + word    
-    sentences = nlp(doc)
+    doc = "" # final output of this function
+    sentences = nlp(text) # this built-in function helps to tokenize and add POS tags to the review
+
     for token in sentences:
-        if token.pos_ == 'NOUN':
-            for child in token.children:
+        if token.pos_ == 'NOUN': 
+            for child in token.children: # a positive adjective phrase would have the root as a the noun and its child would be an adjective
                 if child.pos_ == "ADJ": 
                     synset = list(swn.senti_synsets(child.text, 'a'))
                     if len(synset) > 1 and synset[0].pos_score() > synset[0].neg_score() and synset[0].pos_score() >= synset[0].obj_score():
-                        chunk.append([str(child.text.lower()) + " " + str(token.text.lower())])
-    return chunk
+                        doc += str(child.text.lower()) + " " + str(token.text.lower())
+    return doc
 
+df["pos_adj_phrase"] = df["review"].apply(pos_np)
 
-# In[ ]:
-
-
-df["pos_noun_np"] = df["review"].apply(pos_np)
-
-
-# # Multiple-word feature set: negative noun phrases
-
-# In[33]:
-
-
+# Negative adjectives phrases
 def neg_np (text):
-    stop_words = set(stopwords.words('english'))
-    
-    chunk = []
-    
+    def pos_np (text):
     doc = ""
-         
-    for word in text.split():
-        if word not in stop_words:
-            new +=" " + word    
-        
-    sentences = nlp(doc)
-    
+    sentences = nlp(text)
+
     for token in sentences:
-        
         if token.pos_ == 'NOUN':
             for child in token.children:
                 if child.pos_ == "ADJ": 
                     synset = list(swn.senti_synsets(child.text, 'a'))
-                    
-                    if len(synset) > 1 and synset[0].neg_score() > synset[0].pos_score() and synset[0].neg_score() >= synset[0].obj_score():
-                        chunk.append([str(child.text.lower()) + " " + str(token.text.lower())])
-   
-    return chunk
+                    if len(synset) > 1 and synset[0].neg_score() > synset[0].pos_score() and synset[0].pos_score() >= synset[0].obj_score():
+                        doc += str(child.text.lower()) + " " + str(token.text.lower())
+    return doc
+df["neg_adj_phrase"] = df["review"].apply(neg_np)
 
+# Combine both positive and negative adjective phrases
+df['adj_phrase'] = df['pos_adj_phrase'].str.cat(df['neg_adj_phrase'], sep =" ") 
 
-# In[ ]:
-
-
-df["neg_noun_np"] = df["review"].apply(neg_np)
-
-
-# # Multiple-word feature set: bigrams+trigrams
-
-# In[34]:
-
-
-def normalizer(tweet):
-    only_letters = re.sub("[^a-zA-Z]", " ",tweet) 
-    tokens = nltk.word_tokenize(only_letters)[2:]
-    stop_words = set(stopwords.words('english')) 
-
-    wordnet_lemmatizer = WordNetLemmatizer() # lemmatize text
-    lower_case = [l.lower() for l in tokens]
-    filtered_result = list(filter(lambda l: l not in stop_words, lower_case))
-    lemmas = [wordnet_lemmatizer.lemmatize(t) for t in filtered_result]
-    return lemmas
-
-from nltk import ngrams
-def ngrams(input_list):
-    bigrams = [' '.join(t) for t in list(zip(input_list, input_list[1:]))]
-    trigrams = [' '.join(t) for t in list(zip(input_list, input_list[1:], input_list[2:]))]
-    return bigrams+trigrams
-
-
-# In[ ]:
-
-
-df['grams'] = df.lemma.apply(ngrams)
-
-
-# # Linguistic rule: Negations (negation + adjective)
-
-# In[35]:
-
+# Linguistic rule: Negations (negation + adjective)
+# Here we'll try to capture negation terms, meaning pairs of negative term-adjective, for example, "not good", "isn't effective"
 
 negation = ["no", "haven't", "havent", "hasn", "weren't", "shan't", "shouldn", "mightn't", "hasn't", 
 "couldn't", "aren't", "doesn't", "isn", "needn't", "hadn't", "didn't", "isn't", 
 "doesn", "wasn't", "not", "aren", "mightn", "won't", "mustn", "mustn't", "wouldn", "wouldn't", "couldn", "nor", 
 "needn", "shouldn't", "don't", "haven", "won", "t", "hadn", "didn", "dont", "none", "never", "nothing", "nor",
-"nowhere", "not any", "neither", "dont", "n't"]
+"nowhere", "not any", "neither", "dont", "n't"] # list of negative words
 
 def negative (document):
     doc = nlp(document.strip(",;:?\!"))
@@ -395,123 +247,35 @@ def negative (document):
             mean = (synset[0].neg_score())/(synset[0].pos_score() + synset[0].neg_score() + synset[0].obj_score())
             score = 1
             total += (mean*score)
+            
     return float(total)
-
-
-# In[ ]:
-
 
 df["polarity_score"] = df["review"].apply(negative)
 
-
-# In[21]:
-
-
-df.describe()
-
-
-# # Overview subset after extracting all features
-# def counting (review):
-#     count = 0
-#     for word in negation:
-#         if word in review:
-#             count +=1
-#     return count
-# data['count'] = data['review'].apply(counting)
-
-# In[36]:
-
+# Save it to a separate CSV file for the analysis
 
 df.to_csv("processed_features.csv", sep='\t', na_rep = "", index = False)
 
+# SUMMARY STATISTICS OF ALL FEATURE GROUPS
 
-# *ADJECTIVES*
-# 
+# ADJECTIVES
 # total features of negative adjective: 894
-# 
 # total features of positive adjectives: 813
-# 
 # ratio of positive adjective per review: 1.2 words (~1 word)
-# 
 # ratio of negative adjective per review: 1.5 words (~2 words)
-# 
 # ratio of reviews without any emotion-carrying adjectives: 33386/213869 = 15.6%
-# 
-# *VERBS*
-# 
+
+# VERBS
 # total features of negative verbs: 989
-# 
 # total features of positive verbs: 932
-# 
 # ratio of positive verbs per review: 1.2 words (~1 word)
-# 
 # ratio of negative verbs per review: ~1 word
-# 
 # ratio of reviews without any emotion-carrying verbs: 39153/213869 = 18.3% 
-# 
-# *NOUN PHRASES*
-# 
+
+# NOUN PHRASES
 # total features of positive noun phrases (2-word): 4705/2
-# 
 # total features of positive noun phrases (2-word): 5602/2
-# 
 # ratio of reviews without any pairs of emotion-carrying noun phrases: 112149/213869 = 52%
-# 
-# *NEGATION*
-# 
+
+# NEGATION
 # count of reviews without any negations: 43.6%
-# 
-# this function is not robust towards 'short phrasings', for example, 'not cool' or 'didn't work'. 
-
-# # Combined positive & negative adjectives
-
-# In[7]:
-
-
-data.head()
-
-
-# In[5]:
-
-
-data = data.drop(['polarity_score'], axis = 1)
-
-
-# In[45]:
-
-
-
-
-
-# In[49]:
-
-
-data.to_csv("full_set.csv", sep='\t', na_rep = "", index = False)
-
-
-# In[2]:
-
-
-data = pd.read_csv('/Users/anhvu/Thesis/full_set.csv',delimiter='\t',encoding='utf-8')
-data = data.drop(['grams'], axis =1)
-data = data.drop(['lemma'], axis =1)
-
-
-# In[6]:
-
-
-print(len(data))
-
-
-# In[4]:
-
-
-data = data.rename(columns = {'count_neg_noun_adj': 'neg_adj_np', 'count_neg_np': 'freq_neg_adj_np',
-    'count_pos_noun_adj':'pos_adj_np','count_pos_np':'freq_pos_adj_np'})
-
-
-# In[ ]:
-
-
-
-
