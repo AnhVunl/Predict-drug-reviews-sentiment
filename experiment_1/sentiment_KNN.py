@@ -25,7 +25,7 @@ from sklearn.metrics import roc_auc_score
 
 # Set up data frame
 
-data = pd.read_csv('/Users/anhvu/Thesis/full_set_1st_analysis.csv',delimiter='\t',encoding='utf-8')
+data = pd.read_csv('/processed_features.csv',delimiter='\t',encoding='utf-8')
 data = data.replace(np.nan, '', regex=True)
 data = data.drop(['polarity_score','count_pos_np','count_neg_np',
  'freq_neg_adj','freq_neg_verb','freq_ps_adj','freq_ps_verb','grams','lemma'], axis = 1)
