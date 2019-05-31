@@ -217,7 +217,7 @@ df["neg_adj_phrase"] = df["review"].apply(neg_np)
 # Combine both positive and negative adjective phrases
 df['adj_phrase'] = df['pos_adj_phrase'].str.cat(df['neg_adj_phrase'], sep =" ") 
 
-# Linguistic rule: Negations (negation + adjective)
+# Negations (negation + adjective)
 # Here we'll try to capture negation terms, meaning pairs of negative term-adjective, for example, "not good", "isn't effective"
 
 negation = ["no", "haven't", "havent", "hasn", "weren't", "shan't", "shouldn", "mightn't", "hasn't", 
