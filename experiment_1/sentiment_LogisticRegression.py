@@ -24,11 +24,8 @@ from sklearn.metrics import roc_auc_score
 
 # Set up data frame
 
-data = pd.read_csv('/Users/anhvu/Thesis/full_set_1st_analysis.csv',delimiter='\t',encoding='utf-8')
+data = pd.read_csv('processed_features.csv',delimiter='\t',encoding='utf-8')
 data = data.replace(np.nan, '', regex=True)
-data = data.drop(['polarity_score','count_pos_np'], axis = 1)
-data.head()
-
 
 # Text feature transformation
 # For each text variable, I'd change the X, for example, data['verb'], data['adjectives']
@@ -52,13 +49,12 @@ fr = pd.DataFrame(chi2_scores.sort_values(['score'], ascending = False))
 from nltk.stem import WordNetLemmatizer
 
 lemmatizer = WordNetLemmatizer()
-verbs = []
+words = []
 for word in fr.term:
     x = lemmatizer.lemmatize(word, 'v')
-    if x not in verbs:
-        verbs.append(x)
-print(verbs) # List of selected features
-
+    if x not in words:
+        words.append(x)
+print(words) # List of selected features
 
 # Numerical feature transformation
 
@@ -79,7 +75,6 @@ lgm.fit(X_train, y_train)
 
 y_pred_lr = lgm.predict(X_val)
 y_pred_val = lgm.predict_proba(X_val)[:,1]
-
 
 # Evaluate on the validation set
 
