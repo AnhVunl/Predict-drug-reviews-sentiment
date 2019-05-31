@@ -1,9 +1,11 @@
-In total, I conducted three different experiments, to achieve these two objectives:
+Sentiment Analysis on drug reviews
 
-1. Conduct sentiment analysis of drug reviews
-2. Measure relatedness between text features and review ratings
+We conducted this analysis on a total of 213,869 drug reviews, compiled by Felix Gräßer, Surya Kallumadi, Hagen Malberg, and Sebastian Zaunseder in December, 2018.
+The goal is to distinguish positive from negative drug reviews using fine-grained feature engineering methodologies (syntactic dependencies).
 
-The dataset could be found at this URL:
+The original dataset could be found at this URL:
 https://archive.ics.uci.edu/ml/datasets/Drug+Review+Dataset+%28Drugs.com%29#
 
-The pre-processed CSV file can be extracted by running the script /pre-processing/feature_extraction_all, then please proceed with the scripts in the experiment folder
+We recommend you to first run the script /pre-processing/feature_extraction_all in the pre-processing directory. 
+After that, use the CSV file that is extracted as input for the models in the experiment_1 folder. 
+
