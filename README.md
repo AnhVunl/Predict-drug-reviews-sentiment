@@ -6,14 +6,4 @@ In total, I conducted three different experiments, to achieve these two objectiv
 The dataset could be found at this URL:
 https://archive.ics.uci.edu/ml/datasets/Drug+Review+Dataset+%28Drugs.com%29#
 
-To navigate, start with
-
-1. Preprocessing
-
-2. Experiment_1 
-
-3. Experiment_2
-
-4. Evaluation
-
-5. Reporting
+The pre-processed CSV file can be extracted by running the script /pre-processing/feature_extraction_all, then please proceed with the scripts in the experiment folder
