@@ -27,21 +27,19 @@ from sklearn.metrics import roc_auc_score
 
 data = pd.read_csv('/processed_features.csv',delimiter='\t',encoding='utf-8')
 data = data.replace(np.nan, '', regex=True)
-data = data.drop(['polarity_score','count_pos_np','count_neg_np',
- 'freq_neg_adj','freq_neg_verb','freq_ps_adj','freq_ps_verb','grams','lemma'], axis = 1)
 data.head()
 
 # Text feature transformation
 # For each text variable, I'd change the X, for example, data['verb'], data['adjectives']
 
 # Feature transformation 
-vectorizer = TfidfVectorizer()
+vectorizer = TfidfVectorizer() # could also use CountVectorizer() as another word embedding method
 X = vectorizer.fit_transform(data['verbs'])
 y = data['sentiment']
 
 # Feature selection:
 feature_names = vectorizer.get_feature_names()
-ch2 = SelectKBest(chi2, k = 100)
+ch2 = SelectKBest(chi2, k = 100) # select the most 100 informative words
 X_new = ch2.fit_transform(X, y)
 
 # Access list of features
@@ -87,7 +85,7 @@ print("F1 score", f1_score(y_val, y_pred_val))
 # GridSearch CV
 
 parameters = {'n_neighbors':[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}
-knn_grid = GridSearchCV(knn, parameters, scoring = 'roc_auc')
+knn_grid = GridSearchCV(knn, parameters, scoring = 'roc_auc') # improve on the ROC_AUC metric since it has the lowest score
 knn_grid.fit(X_train, y_train)
 
 # Combine validation and train and refit the model with the new hyperparameter settings
