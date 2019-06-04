@@ -83,7 +83,7 @@ print("Recall", recall_score(y_val, y_pred_lr))
 print("ROC", roc_auc_score(y_val, y_pred_val))
 print("F1 score", f1_score(y_val, y_pred_lr))
 
-# Tune hyperparamatera
+# Tune hyperparameters
 
 parameters = {'penalty':['l1','l2'], 'C':[0.001, 0.01, 0.1, 1,10]}
 lgm_grid = GridSearchCV(lgm, parameters, scoring = 'roc_auc')
