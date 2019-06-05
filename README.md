@@ -1,4 +1,4 @@
-#Sentiment Analysis on drug reviews
+# Sentiment Analysis on drug reviews
 
 We conducted this analysis on a total of 213,869 drug reviews, compiled by Felix Gräßer, Surya Kallumadi, Hagen Malberg, and Sebastian Zaunseder in December, 2018.
 The goal is to distinguish positive from negative drug reviews using fine-grained feature engineering methodologies (polarized POS tags, negations and syntactic dependencies).
